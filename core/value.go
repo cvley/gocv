@@ -1,5 +1,14 @@
 package core
 
+// Value interface is used to convert value to desired type
+type Value interface {
+	Int() int
+	Int64() int64
+	Uint() uint
+	Uint64() uint64
+	Float64() float64
+}
+
 type Int int
 type Int64 int64
 type Uint uint
