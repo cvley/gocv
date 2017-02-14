@@ -55,3 +55,12 @@ func (m *Mat) Set(row, col, channel int, v Value) {
 	index := m.rows*m.cols*channel + m.cols*row + col
 	m.data[index] = v
 }
+
+func (m *Mat) Copy() *Mat {
+	matrix := New(m.rows, m.cols, m.channels)
+	matrix.data = m.data
+}
+
+func (m *Matrix) EqualShape(matrix *Matrix) bool {
+	return m.rows == matrix.rows && m.cols == matrix.cols
+}
