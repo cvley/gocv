@@ -61,6 +61,10 @@ func (m *Mat) Copy() *Mat {
 	matrix.data = m.data
 }
 
-func (m *Matrix) EqualShape(matrix *Matrix) bool {
+func (m *Mat) EqualShape(matrix *Mat) bool {
 	return m.rows == matrix.rows && m.cols == matrix.cols
+}
+
+func (m *Mat) Shape() (int, int, int) {
+	return m.rows, m.cols, m.channels
 }
