@@ -14,6 +14,7 @@ type Value interface {
 	Channels() int
 }
 
+// Char represents values in range [0, 255]
 type Char struct {
 	data     []int
 	channels int
@@ -28,24 +29,37 @@ type Float struct {
 	channels int
 }
 
-func (i Char) Char() Char {
+func NewChar(c int, v ...int) *Char {
+	char := &Char{
+		channels: c,
+		data:     make([]int, c),
+	}
+
+	for i := 0; i < c; i++ {
+		char.data[i] = v[i]
+	}
+
+	return char
+}
+
+func (i *Char) Char() *Char {
 	return i
 }
 
-func (i Char) Int() Int {
-	intv := Char{
-		data:     make([]int, len(i.data)),
+func (i *Char) Int() *Int {
+	intv := &Int{
+		data:     make([]int, i.channels),
 		channels: i.channels,
 	}
 	for i, v := range i.data {
-		intv.data[i] = int(v)
+		intv.data[i] = v
 	}
 	return intv
-
 }
-func (i Char) Float() Float {
-	float := Float{
-		data:     make([]float64, len(i.data)),
+
+func (i *Char) Float() *Float {
+	float := &Float{
+		data:     make([]float64, i.channels),
 		channels: i.channels,
 	}
 
@@ -55,7 +69,7 @@ func (i Char) Float() Float {
 	return float
 }
 
-func (i Char) String() string {
+func (i *Char) String() string {
 	result := make([]string, i.channels)
 	for i, v := range i.data {
 		result[i] = fmt.Sprintf("%d", v)
@@ -64,13 +78,13 @@ func (i Char) String() string {
 	return "[" + strings.Join(result, ",") + "]"
 }
 
-func (i Char) Channels() int {
+func (i *Char) Channels() int {
 	return i.channels
 }
 
-func (i Int) Char() Char {
-	char := Char{
-		data:     make([]int, len(i.data)),
+func (i *Int) Char() *Char {
+	char := &Char{
+		data:     make([]int, i.channels),
 		channels: i.channels,
 	}
 	for i, v := range i.data {
@@ -79,13 +93,13 @@ func (i Int) Char() Char {
 	return char
 }
 
-func (i Int) Int() Int {
+func (i *Int) Int() *Int {
 	return i
 }
 
-func (i Int) Float() Float {
-	float := Float{
-		data:     make([]float64, len(i.data)),
+func (i *Int) Float() *Float {
+	float := &Float{
+		data:     make([]float64, i.channels),
 		channels: i.channels,
 	}
 
@@ -95,7 +109,7 @@ func (i Int) Float() Float {
 	return float
 }
 
-func (i Int) String() string {
+func (i *Int) String() string {
 	result := make([]string, i.channels)
 	for i, v := range i.data {
 		result[i] = fmt.Sprintf("%d", v)
@@ -104,13 +118,13 @@ func (i Int) String() string {
 	return "[" + strings.Join(result, ",") + "]"
 }
 
-func (i Int) Channels() int {
+func (i *Int) Channels() int {
 	return i.channels
 }
 
-func (i Float) Char() Char {
-	char := Char{
-		data:     make([]int, len(i.data)),
+func (i *Float) Char() *Char {
+	char := &Char{
+		data:     make([]int, i.channels),
 		channels: i.channels,
 	}
 	for i, v := range i.data {
@@ -119,22 +133,24 @@ func (i Float) Char() Char {
 	return char
 }
 
-func (i Float) Int() Int {
-	return int(i)
-}
-
-func (i Float) Float() Float {
-	float := Char{
-		data:     make([]float64, len(i.data)),
+func (i *Float) Int() *Int {
+	out := &Int{
+		data:     make([]int, i.channels),
 		channels: i.channels,
 	}
+
 	for i, v := range i.data {
-		float.data[i] = float64(v)
+		out.data[i] = int(v)
 	}
-	return float
+
+	return out
 }
 
-func (i Float) String() string {
+func (i *Float) Float() *Float {
+	return i
+}
+
+func (i *Float) String() string {
 	result := make([]string, i.channels)
 	for i, v := range i.data {
 		result[i] = fmt.Sprintf("%.4f", v)
@@ -143,7 +159,7 @@ func (i Float) String() string {
 	return "[" + strings.Join(result, ",") + "]"
 }
 
-func (i Float) Channels() int {
+func (i *Float) Channels() int {
 	return i.channels
 }
 
