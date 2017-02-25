@@ -12,7 +12,7 @@ type Mat struct {
 }
 
 func New(rows, cols int) *Mat {
-	if row <= 0 || width <= 0 {
+	if rows <= 0 || cols <= 0 {
 		panic("New Mat fail: invalid rows or columns")
 	}
 
@@ -50,6 +50,7 @@ func (m *Mat) Set(row, col int, v Value) {
 func (m *Mat) Copy() *Mat {
 	matrix := New(m.rows, m.cols)
 	matrix.data = m.data
+	return matrix
 }
 
 func (m *Mat) EqualShape(matrix *Mat) bool {
@@ -91,7 +92,7 @@ func (m *Mat) String() string {
 	for row := 0; row < m.rows; row++ {
 		rowResult := make([]string, m.cols)
 		for col := 0; col < m.cols; col++ {
-			rowResult[i] = m.At(row, col).String()
+			rowResult[col] = m.At(row, col).String()
 		}
 		result[row] = "[" + strings.Join(rowResult, ",") + "]"
 	}

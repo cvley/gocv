@@ -7,9 +7,9 @@ import (
 
 // Value interface is used to convert value to desired type
 type Value interface {
-	Char() Char
-	Int() Int
-	Float() Float
+	Char() *Char
+	Int() *Int
+	Float() *Float
 	String() string
 	Channels() int
 }
@@ -29,17 +29,47 @@ type Float struct {
 	channels int
 }
 
-func NewChar(c int, v ...int) *Char {
-	char := &Char{
-		channels: c,
-		data:     make([]int, c),
-	}
+func NewValue(c int, v interface{}) Value {
+	switch v.(type) {
+	case int:
+		char := &Char{
+			channels: c,
+			data:     make([]int, c),
+		}
+		char.data[0] = v.(int)
+		return char
 
-	for i := 0; i < c; i++ {
-		char.data[i] = v[i]
-	}
+	case float64:
+		float := &Float{
+			channels: c,
+			data:     make([]float64, c),
+		}
+		float.data[0] = v.(float64)
+		return float
 
-	return char
+	case []int:
+		char := &Char{
+			channels: c,
+			data:     make([]int, c),
+		}
+		for i := 0; i < c; i++ {
+			char.data[i] = v.([]int)[i]
+		}
+		return char
+
+	case []float64:
+		float := &Float{
+			channels: c,
+			data:     make([]float64, c),
+		}
+		for i := 0; i < c; i++ {
+			float.data[i] = v.([]float64)[i]
+		}
+		return float
+
+	default:
+		panic("Value type not supported")
+	}
 }
 
 func (i *Char) Char() *Char {
@@ -88,7 +118,7 @@ func (i *Int) Char() *Char {
 		channels: i.channels,
 	}
 	for i, v := range i.data {
-		char.data[i] = char(v)
+		char.data[i] = toChar(v)
 	}
 	return char
 }
@@ -128,7 +158,7 @@ func (i *Float) Char() *Char {
 		channels: i.channels,
 	}
 	for i, v := range i.data {
-		char.data[i] = char(v)
+		char.data[i] = toChar(v)
 	}
 	return char
 }
@@ -163,25 +193,25 @@ func (i *Float) Channels() int {
 	return i.channels
 }
 
-func char(v interface{}) int {
+func toChar(v interface{}) int {
 	switch v.(type) {
 	case int:
-		if v < 0 {
+		if v.(int) < 0 {
 			return 0
 		}
-		if v > 255 {
+		if v.(int) > 255 {
 			return 255
 		}
-		return v
+		return v.(int)
 
 	case float64:
-		if v < 0 {
+		if v.(float64) < 0 {
 			return 0
 		}
-		if v > 255 {
+		if v.(float64) > 255 {
 			return 255
 		}
-		return int(v)
+		return int(v.(float64))
 
 	default:
 		panic("char func not support value type")
