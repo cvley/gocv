@@ -1,8 +1,16 @@
 package transform
 
-func Arnold(data *Matrix) {
-	N := data.Width()
-	result, _ := New(N, N)
+import (
+	"github.com/cvley/gocv/core"
+)
+
+func Arnold(data *core.Mat) {
+	if data.Rows() != data.Cols() {
+		panic("Arnold fail: rows != cols")
+	}
+
+	N := data.Rows()
+	result := core.NewMat(N, N)
 	for h := 0; h < N; h++ {
 		for w := 0; w < N; w++ {
 			x := (h + w) % N

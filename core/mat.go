@@ -11,7 +11,7 @@ type Mat struct {
 	cols int
 }
 
-func New(rows, cols int) *Mat {
+func NewMat(rows, cols int) *Mat {
 	if rows <= 0 || cols <= 0 {
 		panic("New Mat fail: invalid rows or columns")
 	}
@@ -48,7 +48,7 @@ func (m *Mat) Set(row, col int, v Value) {
 }
 
 func (m *Mat) Copy() *Mat {
-	matrix := New(m.rows, m.cols)
+	matrix := NewMat(m.rows, m.cols)
 	matrix.data = m.data
 	return matrix
 }
