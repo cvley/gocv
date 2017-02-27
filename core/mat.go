@@ -74,6 +74,20 @@ func (m *Mat) Row(i int) []Value {
 	return row
 }
 
+func (m *Mat) SetRow(i int, v []Value) {
+	if i < 0 {
+		i += m.rows
+	}
+
+	if len(v) < m.cols {
+		panic("Mat SetRow fail: mismatch length")
+	}
+
+	for col := 0; col < m.cols; col++ {
+		m.Set(i, col, v[col])
+	}
+}
+
 func (m *Mat) Col(i int) []Value {
 	if i < 0 {
 		i += m.cols
@@ -85,6 +99,20 @@ func (m *Mat) Col(i int) []Value {
 	}
 
 	return col
+}
+
+func (m *Mat) SetCol(i int, v []Value) {
+	if i < 0 {
+		i += m.cols
+	}
+
+	if len(v) < m.rows {
+		panic("Mat SetCol fail: mismatch length")
+	}
+
+	for row := 0; row < m.rows; row++ {
+		m.Set(row, i, v[row])
+	}
 }
 
 func (m *Mat) String() string {
