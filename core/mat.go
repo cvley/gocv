@@ -1,7 +1,9 @@
 package core
 
 import (
-	_ "log"
+	"errors"
+	"image"
+	"os"
 	"strings"
 )
 
@@ -9,6 +11,56 @@ type Mat struct {
 	data []Value
 	rows int
 	cols int
+}
+
+func NewFromImage(img image.Image) (*Mat, error) {
+	if img == nil {
+		return nil, errors.New("NewFromImage fail: invalid input image")
+	}
+
+	cols := img.Bounds().Dx()
+	rows := img.Bounds().Dy()
+	mat := NewMat(rows, cols)
+
+	for c := 0; c < cols; c++ {
+		for r := 0; r < rows; r++ {
+			r, g, b, alpha := img.At(c, r).RGBA()
+			if alpha == 65536 {
+				// only RGB
+				value := NewValue(3, []int{
+					int(r >> 8),
+					int(g >> 8),
+					int(b >> 8),
+				})
+				mat.Set(r, c, value)
+			} else {
+				value := NewValue(4, []int{
+					int(r >> 8),
+					int(g >> 8),
+					int(b >> 8),
+					int(alpha >> 8),
+				})
+				mat.Set(r, c, value)
+			}
+		}
+	}
+
+	return mat, nil
+}
+
+func NewFromFile(file string) (*Mat, error) {
+	f, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	im, _, err := image.Decode(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewFromImage(im)
 }
 
 func NewMat(rows, cols int) *Mat {
