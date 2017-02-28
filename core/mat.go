@@ -3,16 +3,35 @@ package core
 import (
 	"errors"
 	"image"
+	"image/color"
+	"image/jpeg"
+	"image/png"
 	"os"
 	"strings"
 )
 
+// Format represents image type
+type Format int
+
+var (
+	// FormatJPEG represents JPEG format
+	FormatJPEG Format = iota
+	// FormatPNG represents JPEG format
+	FormatPNG Format
+)
+
+var (
+	defaultJPEGQuality = 95
+)
+
+// Mat represents a matrix of Values
 type Mat struct {
 	data []Value
 	rows int
 	cols int
 }
 
+// NewFromImage returns a Mat from image
 func NewFromImage(img image.Image) (*Mat, error) {
 	if img == nil {
 		return nil, errors.New("NewFromImage fail: invalid input image")
@@ -48,6 +67,7 @@ func NewFromImage(img image.Image) (*Mat, error) {
 	return mat, nil
 }
 
+// NewFromFile returns a Mat from a image file
 func NewFromFile(file string) (*Mat, error) {
 	f, err := os.Open(file)
 	if err != nil {
@@ -63,6 +83,7 @@ func NewFromFile(file string) (*Mat, error) {
 	return NewFromImage(im)
 }
 
+// NewMat returns an all zeros Mat of input rows and columns
 func NewMat(rows, cols int) *Mat {
 	if rows <= 0 || cols <= 0 {
 		panic("New Mat fail: invalid rows or columns")
@@ -75,14 +96,17 @@ func NewMat(rows, cols int) *Mat {
 	}
 }
 
+// Rows returns the rows number of Mat
 func (m *Mat) Rows() int {
 	return m.rows
 }
 
+// Cols returns the columns number of Mat
 func (m *Mat) Cols() int {
 	return m.cols
 }
 
+// At returns Values in the position of input row and col
 func (m *Mat) At(row, col int) Value {
 	if row >= m.rows || row < 0 || col >= m.cols || col < 0 {
 		panic("Mat: at position out of range")
@@ -91,6 +115,7 @@ func (m *Mat) At(row, col int) Value {
 	return m.data[m.cols*row+col]
 }
 
+// Set will reset the value in the position of Mat
 func (m *Mat) Set(row, col int, v Value) {
 	if row >= m.rows || row < 0 || col >= m.cols || col < 0 {
 		panic("Mat: set position out of range")
@@ -99,20 +124,41 @@ func (m *Mat) Set(row, col int, v Value) {
 	m.data[m.cols*row+col] = v
 }
 
+// Copy returns a Mat with the same shape and data
 func (m *Mat) Copy() *Mat {
 	matrix := NewMat(m.rows, m.cols)
 	matrix.data = m.data
 	return matrix
 }
 
+// EqualShape returns whether the input Mat has the same shape
 func (m *Mat) EqualShape(matrix *Mat) bool {
 	return m.rows == matrix.rows && m.cols == matrix.cols
 }
 
+// Equal returns whether the input Mat is the same
+func (m *Mat) Equal(matrix *Mat) bool {
+	if !m.EqualShape(matrix) {
+		return false
+	}
+
+	for c := 0; c < m.cols; c++ {
+		for r := 0; r < m.rows; r++ {
+			if !m.At(r, c).Equal(matrix.At(r, c)) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// Shape returns the shape of Mat, i.e. rows and columns
 func (m *Mat) Shape() (int, int) {
 	return m.rows, m.cols
 }
 
+// Row returns values of the input index row of Mat
 func (m *Mat) Row(i int) []Value {
 	if i < 0 {
 		i += m.rows
@@ -126,6 +172,7 @@ func (m *Mat) Row(i int) []Value {
 	return row
 }
 
+// SetRow will reset the input index row of Mat
 func (m *Mat) SetRow(i int, v []Value) {
 	if i < 0 {
 		i += m.rows
@@ -140,6 +187,7 @@ func (m *Mat) SetRow(i int, v []Value) {
 	}
 }
 
+// Col returns values of the input index column of Mat
 func (m *Mat) Col(i int) []Value {
 	if i < 0 {
 		i += m.cols
@@ -153,6 +201,7 @@ func (m *Mat) Col(i int) []Value {
 	return col
 }
 
+// SetCol will reset the input index column of Mat
 func (m *Mat) SetCol(i int, v []Value) {
 	if i < 0 {
 		i += m.cols
@@ -167,6 +216,83 @@ func (m *Mat) SetCol(i int, v []Value) {
 	}
 }
 
+// ToImage returns a image container of Mat
+func (m *Mat) ToImage() image.Image {
+	im := image.NewRGBA(image.Rectangle{
+		Max: image.Point{
+			X: m.cols,
+			Y: m.rows,
+		},
+	})
+
+	switch m.data[0].Channels() {
+	case 1:
+		for c := 0; c < m.cols; c++ {
+			for r := 0; r < m.rows; r++ {
+				value := m.At(r, c).Char()
+				im.Set(c, r, color.Gray{
+					Y: uint8(value.At(0)),
+				})
+			}
+		}
+
+	case 3:
+		for c := 0; c < m.cols; c++ {
+			for r := 0; r < m.rows; r++ {
+				value := m.At(r, c).Char()
+				im.Set(c, r, color.RGBA{
+					R: uint8(value.At(0)),
+					G: uint8(value.At(1)),
+					B: uint8(value.At(2)),
+				})
+			}
+		}
+
+	case 4:
+		for c := 0; c < m.cols; c++ {
+			for r := 0; r < m.rows; r++ {
+				value := m.At(r, c).Char()
+				im.Set(c, r, color.RGBA{
+					R: uint8(value.At(0)),
+					G: uint8(value.At(1)),
+					B: uint8(value.At(2)),
+					A: uint8(value.At(3)),
+				})
+			}
+		}
+
+	default:
+		panic("Mat to Image fail: only 1, 3 or 4 channels are supported.")
+	}
+}
+
+// Imwrite will save the Mat to the disk with specified format and name
+func (m *Mat) Imwrite(name string, format Format) error {
+	im := m.ToImage()
+
+	f, err := os.Create(name)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	switch format {
+	case FormatJPEG:
+		if err := jpeg.Encode(f, im, &jpeg.Options{Quality: defaultJPEGQuality}); err != nil {
+			return err
+		}
+
+	case FormatPNG:
+		if err := png.Encode(f, im); err != nil {
+			return err
+		}
+
+	default:
+		panic("Mat Imwrite only support jpeg and png")
+	}
+}
+
+// String returns the string format of Mat data
 func (m *Mat) String() string {
 	result := make([]string, m.rows)
 	for row := 0; row < m.rows; row++ {
