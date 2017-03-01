@@ -21,6 +21,11 @@ var (
 )
 
 var (
+	// ErrShape represents mismatch shape error
+	ErrShape = errors.New("mismatch shape")
+)
+
+var (
 	defaultJPEGQuality = 95
 )
 
@@ -96,6 +101,34 @@ func NewMat(rows, cols int) *Mat {
 	}
 }
 
+// Init returns a Mat with input values
+func Init(rows, cols int, value Value) *Mat {
+	mat := NewMat(rows, cols)
+
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			mat.Set(r, c, value)
+		}
+	}
+
+	return mat
+}
+
+// InitEye returns a Mat with input values in the eye position
+func InitEye(rows, cols int, value Value) *Mat {
+	mat := NewMat(rows, cols)
+	min := rows
+	if min > cols {
+		min = cols
+	}
+
+	for i := 0; i < min; i++ {
+		mat.Set(i, i, value)
+	}
+
+	return mat
+}
+
 // Rows returns the rows number of Mat
 func (m *Mat) Rows() int {
 	return m.rows
@@ -127,8 +160,80 @@ func (m *Mat) Set(row, col int, v Value) {
 // Copy returns a Mat with the same shape and data
 func (m *Mat) Copy() *Mat {
 	matrix := NewMat(m.rows, m.cols)
-	matrix.data = m.data
+	copy(matrix.data, m.data)
 	return matrix
+}
+
+// Sub returns a sub mat with the input shape
+func (m *Mat) Sub(rect Rect) (*Mat, error) {
+	rows := rect.Dx()
+	cols := rect.Dy()
+	
+	mat := NewMat(rows, cols)
+	// TODO Rect
+}
+
+// Reshape returns a new shape Mat
+func (m *Mat) Reshape(rows, cols int) (*Mat, error) {
+	if m.rows == rows && m.cols == cols {
+		return m, nil
+	}
+
+	if m.rows * m.cols != rows * cols {
+		return nil, ErrShape
+	}
+
+	mat := NewMat(rows, cols)
+	copy(mat.data, m.data)
+	return mat
+}
+
+// Scale performs bitwise scale of the Mat
+func (m *Mat) Scale(scale float64) {
+	for r := 0; r < m.rows; r++ {
+		for c := 0; c < m.cols; c++ {
+			v := m.At(r, c)
+			m.Set(r, c, v.Scale(scale))
+		}
+	}
+}
+
+// Mul performs two matrix multiplication with the same shape
+func (m *Mat) Mul(matrix *Mat) error {
+	if !m.EqualShape(matrix) {
+		return ErrShape
+	}
+
+	for r := 0; r < m.rows; r++ {
+		for c := 0; c < m.cols; c++ {
+			v := m.At(r, c)
+			if err := m.At(r, c).Mul(matrix.At(r, c)); err != nil {
+				return err
+			}
+			m.Set(r, c, v)
+		}
+	}
+
+	return nil
+}
+
+// Add performs two matrix addition with the same shape
+func (m *Mat) Add(matrix *Mat) {
+	if !m.EqualShape(matrix) {
+		return ErrShape
+	}
+
+	for r := 0; r < m.rows; r++ {
+		for c := 0; c < m.cols; c++ {
+			v := m.At(r, c)
+			if err := m.At(r, c).Add(matrix.At(r, c)); err != nil {
+				return err
+			}
+			m.Set(r, c, v)
+		}
+	}
+
+	return nil
 }
 
 // EqualShape returns whether the input Mat has the same shape
