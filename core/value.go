@@ -3,6 +3,11 @@ package core
 import (
 	"fmt"
 	"strings"
+	"errors"
+)
+
+var (
+	ErrChannels = errors.New("mismatch channels")
 )
 
 // Value interface is used to convert value to desired type
@@ -10,6 +15,9 @@ type Value interface {
 	Char() *Char
 	Int() *Int
 	Float() *Float
+	Scale(float64)
+	Mul(Value) error
+	Add(Value) error
 	String() string
 	Channels() int
 }
@@ -99,6 +107,23 @@ func (i *Char) Float() *Float {
 	return float
 }
 
+func (i *Char) Scale(scale float64) {
+}
+
+func (i *Char) Mul(v Value) error {
+	if i.channels != v.Channels() {
+		return ErrChannels
+	}
+}
+
+func (i *Char) At(idx int) int {
+	if idx < 0 {
+		idx += i.channels
+	}
+
+	return i.data[idx]
+}
+
 func (i *Char) String() string {
 	result := make([]string, i.channels)
 	for i, v := range i.data {
@@ -152,6 +177,14 @@ func (i *Int) Channels() int {
 	return i.channels
 }
 
+func (i *Int) At(idx int) int {
+	if idx < 0 {
+		idx += i.channels
+	}
+
+	return i.data[idx]
+}
+
 func (i *Float) Char() *Char {
 	char := &Char{
 		data:     make([]int, i.channels),
@@ -191,6 +224,14 @@ func (i *Float) String() string {
 
 func (i *Float) Channels() int {
 	return i.channels
+}
+
+func (i *Float) At(idx int) int {
+	if idx < 0 {
+		idx += i.channels
+	}
+
+	return i.data[idx]
 }
 
 func toChar(v interface{}) int {
